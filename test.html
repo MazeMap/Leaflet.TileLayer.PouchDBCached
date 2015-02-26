@@ -40,7 +40,9 @@
 			layers: 'nexrad-n0r-900913',
 			format: 'image/png',
 			transparent: true,
-			attribution: "Weather data © 2012 IEM Nexrad"
+			attribution: "Weather data © 2012 IEM Nexrad",
+
+			maxAge: 30 * 1000	// 30 seconds
 		});
 
 		wmsLayer.addTo(map);
