@@ -87,6 +87,6 @@ L.TileLayer.PouchDBCached = L.TileLayer.extend({
 
 
 L.tileLayer.pouchDBCached = function (url, options) {
-    return new L.TileLayer.PouchDB(url, options);
+    return new L.TileLayer.PouchDBCached(url, options);
 };
 
