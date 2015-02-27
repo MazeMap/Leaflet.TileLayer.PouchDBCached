@@ -101,7 +101,87 @@ L.TileLayer.PouchDBCached = L.TileLayer.extend({
 			}
 			this.db.put(doc, tileUrl, doc.timestamp);
 		}.bind(this);
+	},
+
+
+	// Seeds the cache given a bounding box (latLngBounds), and
+	//   the minimum and maximum zoom levels
+	// Use with care! This can spawn thousands of requests and
+	//   flood tileservers!
+	seed: function(bbox, minZoom, maxZoom) {
+		if (minZoom > maxZoom) return;
+		if (!this._map) return;
+
+		var queue = [];
+
+		for (var z = minZoom; z<maxZoom; z++) {
+
+			var northEastPoint = this._map.project(bbox.getNorthEast(),z);
+			var southWestPoint = this._map.project(bbox.getSouthWest(),z);
+
+			// Calculate tile indexes as per L.TileLayer._update and
+			//   L.TileLayer._addTilesFromCenterOut
+			var tileSize   = this._getTileSize();
+			var tileBounds = L.bounds(
+				northEastPoint.divideBy(tileSize)._floor(),
+				southWestPoint.divideBy(tileSize)._floor());
+
+			for (var j = tileBounds.min.y; j <= tileBounds.max.y; j++) {
+				for (var i = tileBounds.min.x; i <= tileBounds.max.x; i++) {
+					point = new L.Point(i, j);
+					point.z = z;
+					queue.push(this.getTileUrl(point));
+				}
+			}
+		}
+
+		var seedData = {
+			bbox: bbox,
+			minZoom: minZoom,
+			maxZoom: maxZoom,
+			queueLength: queue.length
+		}
+		this.fire('seedstart', seedData);
+		var tile = this._createTile();
+		tile._layer = this;
+		this._seedOneTile(tile, queue, seedData);
+	},
+
+	// Uses a defined tile to eat through one item in the queue and
+	//   asynchronously recursively call itself when the tile has
+	//   finished loading.
+	_seedOneTile: function(tile, remaining, seedData) {
+		if (!remaining.length) {
+			this.fire('seedend', seedData);
+			return;
+		}
+		this.fire('seedprogress', {
+			bbox:    seedData.bbox,
+			minZoom: seedData.minZoom,
+			maxZoom: seedData.maxZoom,
+			queueLength: seedData.queueLength,
+			remainingLength: remaining.length
+		});
+
+		var url = remaining.pop();
+
+		this.db.get(url, function(err,data){
+			if (!data) {
+				tile.onload = function(ev){
+					this._saveTile(url)(ev);
+					this._seedOneTile(tile, remaining, seedData);
+				}.bind(this);
+				tile.crossOrigin = 'Anonymous';
+				tile.src = url;
+			} else {
+				this._seedOneTile(tile, remaining, seedData);
+			}
+		}.bind(this));
+
+
 	}
+
+
 });
 
 
@@ -125,7 +205,10 @@ L.TileLayer.WMS.PouchDBCached = L.TileLayer.WMS.extend({
 	},
 	_loadTile:      L.TileLayer.PouchDBCached.prototype._loadTile,
 	_onCacheLookup: L.TileLayer.PouchDBCached.prototype._onCacheLookup,
-	_saveTile:      L.TileLayer.PouchDBCached.prototype._saveTile
+	_saveTile:      L.TileLayer.PouchDBCached.prototype._saveTile,
+
+	seed:           L.TileLayer.PouchDBCached.prototype.seed,
+	_seedOneTile:   L.TileLayer.PouchDBCached.prototype._seedOneTile
 });
 
 L.tileLayer.wms.pouchDBCached = function (url, options) {

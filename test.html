@@ -11,6 +11,8 @@
 <body>
 	<div id="map" style="width: 600px; height: 400px"></div>
 
+	<button onclick="seed()">Seed world from Z=0 until Z=4</div>
+
 	<script src="bower_components/leaflet/dist/leaflet-src.js"></script>
 	<script src="bower_components/pouchdb/dist/pouchdb.js"></script>
 	<script src="L.TileLayer.PouchDBCached.js"></script>
@@ -46,6 +48,24 @@
 		});
 
 		wmsLayer.addTo(map);
+
+
+
+
+
+		function seed() {
+			var bbox = L.latLngBounds(L.latLng(-85,-180), L.latLng(85,180));
+			layer.seed( bbox, 0, 4 );
+		}
+
+		// Display seed progress on console
+		layer.on('seedprogress', function(seedData){
+			var percent = 100 - Math.floor(seedData.remainingLength / seedData.queueLength * 100);
+			console.log('Seeding ' + percent + '% done');
+		});
+		layer.on('seedend', function(seedData){
+			console.log('Cache seeding complete');
+		});
 
 	</script>
 </body>
