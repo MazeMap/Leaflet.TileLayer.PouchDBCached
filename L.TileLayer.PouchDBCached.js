@@ -1,30 +1,33 @@
 
 
+L.TileLayer.addInitHook(function(url,opts) {
+
+	if (!opts.useCache) {
+		this._db     = null;
+		this._canvas = null;
+		return;
+	}
+
+	this._db = new PouchDB('offline-tiles');
+	this._canvas = document.createElement('canvas');
+
+	if (!(this._canvas.getContext && this._canvas.getContext('2d'))) {
+		// HTML5 canvas is needed to pack the tiles as base64 data. If
+		//   the browser doesn't support canvas, the code will forcefully
+		//   skip caching the tiles.
+		this._canvas = null;
+	}
+});
+
+L.TileLayer.prototype.options.useCache     = false;
+L.TileLayer.prototype.options.saveToCache  = true;
+L.TileLayer.prototype.options.useOnlyCache = false;
+L.TileLayer.prototype.options.cacheMaxAge  = 24*3600*1000;
 
 
-L.TileLayer.PouchDBCached = L.TileLayer.extend({
+L.TileLayer.include({
 
-	options: {
-		requestTiles: true,  // If false, will only use tiles already existing on the cache
-		cacheTiles: true,    // If false, will not cache new tiles.
-		maxAge: 24*3600*1000 // Maximum cache age, in MILLIseconds (default 24 hours)
-	},
-
-	initialize: function(url, options){
-		this.db = new PouchDB('offline-tiles');
-		this.canvas = document.createElement('canvas');
-
-		if (!(this.canvas.getContext && this.canvas.getContext('2d'))) {
-			// HTML5 canvas is needed to pack the tiles as base64 data. If
-			//   the browser doesn't support canvas, the code will forcefully
-			//   skip caching the tiles.
-			this.canvas = null;
-		}
-
-		L.TileLayer.prototype.initialize.call(this,url,options);
-	},
-
-	// Overwrites L.TileLayer.prototype_loadTile
+	// Overwrites L.TileLayer.prototype._loadTile
 	_loadTile: function(tile, tilePoint) {
 		tile._layer  = this;
 		tile.onerror = this._tileOnError;
@@ -37,7 +40,13 @@ L.TileLayer.PouchDBCached = L.TileLayer.extend({
 			url: tileUrl
 		});
 
-		this.db.get(tileUrl, {revs_info: true}, this._onCacheLookup(tile,tileUrl));
+		if (this.options.useCache && this._canvas) {
+			this._db.get(tileUrl, {revs_info: true}, this._onCacheLookup(tile,tileUrl));
+		} else {
+			// Fall back to standard behaviour
+			tile.onload  = this._tileOnLoad;
+			tile.src = tileUrl;
+		}
 	},
 
 	// Returns a callback (closure over tile/key/originalSrc) to be run when the DB
@@ -45,9 +54,15 @@ L.TileLayer.PouchDBCached = L.TileLayer.extend({
 	_onCacheLookup: function(tile,tileUrl) {
 		return function(err,data) {
 			if (data) {
-				if (Date.now() > data.timestamp + this.options.maxAge && this.options.requestTiles) {
-					// Tile is too old
-					if (this.options.cacheTiles) {
+				this.fire('tilecachehit', {
+					tile: tile,
+					url: tileUrl
+				});
+				if (Date.now() > data.timestamp + this.options.cacheMaxAge && !this.options.useOnlyCache) {
+					// Tile is too old, try to refresh it
+// 					console.log('Tile is too old: ', tileUrl);
+
+					if (this.options.saveToCache) {
 						tile.onload = this._saveTile(tileUrl, data._revs_info[0].rev);
 					}
 					tile.crossOrigin = 'Anonymous';
@@ -58,18 +73,28 @@ L.TileLayer.PouchDBCached = L.TileLayer.extend({
 						this.src = data.dataUrl;
 					}
 				} else {
+					// Serve tile from cached data
+// 					console.log('Tile is cached: ', tileUrl);
 					tile.onload  = this._tileOnLoad;
 					tile.src = data.dataUrl;    // data.dataUrl is already a base64-encoded PNG image.
 				}
 			} else {
-				if (!this.options.requestTiles) {
+				this.fire('tilecachemiss', {
+					tile: tile,
+					url: tileUrl
+				});
+				if (this.options.useOnlyCache) {
 					// Offline, not cached
+// 					console.log('Tile not in cache', tileUrl);
 					tile.onload  = this._tileOnLoad;
 					tile.src = L.Util.emptyImageUrl;
 				} else {
 					// Online, not cached, request the tile normally
-					if (this.options.cacheTiles) {
+// 					console.log('Requesting tile normally', tileUrl);
+					if (this.options.saveToCache) {
 						tile.onload = this._saveTile(tileUrl);
+					} else {
+						tile.onload  = this._tileOnLoad;
 					}
 					tile.crossOrigin = 'Anonymous';
 					tile.src = tileUrl;
@@ -84,22 +109,22 @@ L.TileLayer.PouchDBCached = L.TileLayer.extend({
 	//   This will keep just the latest valid copy of the image in the cache.
 	_saveTile: function(tileUrl, existingRevision) {
 		return function(ev) {
-			if (this.canvas === null) return;
+			if (this._canvas === null) return;
 			var img = ev.target;
 			L.TileLayer.prototype._tileOnLoad.call(img,ev);
-			this.canvas.width  = img.naturalWidth  || img.width;
-			this.canvas.height = img.naturalHeight || img.height;
+			this._canvas.width  = img.naturalWidth  || img.width;
+			this._canvas.height = img.naturalHeight || img.height;
 
-			var context = this.canvas.getContext('2d');
+			var context = this._canvas.getContext('2d');
 			context.drawImage(img, 0, 0);
 
-			var dataUrl = this.canvas.toDataURL('image/png');
+			var dataUrl = this._canvas.toDataURL('image/png');
 			var doc = {dataUrl: dataUrl, timestamp: Date.now()};
 
 			if (existingRevision) {
-				this.db.remove(tileUrl, existingRevision);
+				this._db.remove(tileUrl, existingRevision);
 			}
-			this.db.put(doc, tileUrl, doc.timestamp);
+			this._db.put(doc, tileUrl, doc.timestamp);
 		}.bind(this);
 	},
 
@@ -165,8 +190,9 @@ L.TileLayer.PouchDBCached = L.TileLayer.extend({
 
 		var url = remaining.pop();
 
-		this.db.get(url, function(err,data){
+		this._db.get(url, function(err,data){
 			if (!data) {
+				/// FIXME: Do something on tile error!!
 				tile.onload = function(ev){
 					this._saveTile(url)(ev);
 					this._seedOneTile(tile, remaining, seedData);
@@ -178,42 +204,8 @@ L.TileLayer.PouchDBCached = L.TileLayer.extend({
 			}
 		}.bind(this));
 
-
 	}
 
-
 });
-
-
-
-
-L.tileLayer.pouchDBCached = function (url, options) {
-	return new L.TileLayer.PouchDBCached(url, options);
-};
-
-
-
-// This is a hackish way of making WMS tile layers to be cached. Maybe a better
-//   architecture would be to modify the core L.TileLayer class and then
-//   enabling caching at instantiation time.
-
-L.TileLayer.WMS.PouchDBCached = L.TileLayer.WMS.extend({
-	options:        L.TileLayer.PouchDBCached.prototype.options,
-	initialize:     function(url,opts) {
-		L.TileLayer.WMS.prototype.initialize.call(this,url,opts);
-		L.TileLayer.PouchDBCached.prototype.initialize.call(this,url,opts);
-	},
-	_loadTile:      L.TileLayer.PouchDBCached.prototype._loadTile,
-	_onCacheLookup: L.TileLayer.PouchDBCached.prototype._onCacheLookup,
-	_saveTile:      L.TileLayer.PouchDBCached.prototype._saveTile,
-
-	seed:           L.TileLayer.PouchDBCached.prototype.seed,
-	_seedOneTile:   L.TileLayer.PouchDBCached.prototype._seedOneTile
-});
-
-L.tileLayer.wms.pouchDBCached = function (url, options) {
-	return new L.TileLayer.WMS.PouchDBCached(url, options);
-};
-
 
 

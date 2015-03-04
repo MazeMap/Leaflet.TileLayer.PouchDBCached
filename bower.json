@@ -1,10 +1,10 @@
 {
   "name": "Leaflet.TileLayer.PouchDBCached",
-  "version": "0.0.0",
+  "version": "0.2.0",
   "authors": [
     "Iván Sánchez Ortega <ivan@mazemap.no>"
   ],
-  "description": "A Leaflet tile layer which caches into PouchDB for offline use",
+  "description": "Allows all TileLayers to cache into PouchDB for offline use",
   "main": "L.TileLayer.PouchDBCached.js",
   "keywords": [
     "leaflet",

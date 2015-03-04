@@ -21,29 +21,37 @@
 // 		var map = L.map('map').setView([63.41784,10.40359], 5);
 		var map = L.map('map').setView([40,-100], 4);
 
-		var layer = L.tileLayer.pouchDBCached('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+		var layer = L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
 				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
 				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-			id: 'examples.map-i875mjb7'
+			id: 'examples.map-i875mjb7',
+			useCache: true
 		});
 
-		// Listen to db changes and spam the console
-		var changes = layer.db.changes({
-			since: 'now',
-			live: true
-		}).on('change', function(change) { console.log(change); });
+		// Listen to cache hits and misses and spam the console
+		// The cache hits and misses are only from this layer, not from the WMS layer.
+		layer.on('tilecachehit',function(ev){
+			console.log('Cache hit: ', ev.url);
+		});
+		layer.on('tilecachemiss',function(ev){
+			console.log('Cache miss: ', ev.url);
+		});
 
 		layer.addTo(map);
 
 
-		var wmsLayer = L.tileLayer.wms.pouchDBCached("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
+
+
+
+		var wmsLayer = L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
 			layers: 'nexrad-n0r-900913',
 			format: 'image/png',
 			transparent: true,
 			attribution: "Weather data © 2012 IEM Nexrad",
 
+			useCache: true,
 			maxAge: 30 * 1000	// 30 seconds
 		});
 
@@ -52,7 +60,7 @@
 
 
 
-
+		// Seed the base layer, for the whole world, for zoom levels 0 through 4.
 		function seed() {
 			var bbox = L.latLngBounds(L.latLng(-85,-180), L.latLng(85,180));
 			layer.seed( bbox, 0, 4 );
