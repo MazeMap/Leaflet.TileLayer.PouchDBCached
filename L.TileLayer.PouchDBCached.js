@@ -1,8 +1,8 @@
 
 
-L.TileLayer.addInitHook(function(url,opts) {
+L.TileLayer.addInitHook(function() {
 
-	if (!opts.useCache) {
+	if (!this.options.useCache) {
 		this._db     = null;
 		this._canvas = null;
 		return;
