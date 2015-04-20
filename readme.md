@@ -48,6 +48,14 @@ New events available are as follows:
 Most users will like to check out the `test.html` file in this repo. It includes examples for two cached tilelayers, a basic cache seed operation, and most of the new events.
 
 
+# Cross-Origin Resource Sharing
+
+Due to the tile images being parsed and stored by the browser (technically, extracting data from a canvas in which a external image has been loaded into), the tiles must come from a tile server which allows CORS (Cross-Origin Resource Sharing) on the tiles. So tiles must have a CORS header allowing them to be loaded in the document where you're using this caching layer.
+
+In other words: if chrome shows a grey map, and displays CORS-related messages in the console, make sure that your tileserver adds this header to all tiles:
+
+`Access-Control-Allow-Origin: *`
+
 
 # Underlying cache structure
 
