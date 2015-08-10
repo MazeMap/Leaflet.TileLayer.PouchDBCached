@@ -2,11 +2,13 @@
 
 Allows all Leaflet TileLayers to cache into PouchDB for offline use, in a transparent fashion.
 
+There is a [demo](http://mazemap.github.io/Leaflet.TileLayer.PouchDBCached/demo.html) available, which shows cache hits/misses/seeds in the browser's developer console.
 
 # Dependencies
 
-Works with Leaflet 0.7.3 and PouchDB 3.3.1. Consider using Bower for fetching the right dependencies.
+Works with Leaflet 1.0-beta1 and PouchDB 3.3.1 (or greater). Consider using Bower for fetching the right dependencies.
 
+If you are still using Leaflet 0.7.x, the latest compatible release is [v0.1.0](https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached/releases/tag/v0.1.0).
 
 # Usage
 
@@ -43,9 +45,6 @@ New events available are as follows:
 * `seedend`: Fired when a layer cache has finished seeding.
 * `seedprogress`: Fired every time a tile is cached during a seed operation
  * `remainingLength`: (integer) How many tiles are left in the seed queue. Starts with a value of `queueLength` and drops down to zero.
-
-
-Most users will like to check out the `test.html` file in this repo. It includes examples for two cached tilelayers, a basic cache seed operation, and most of the new events.
 
 
 # Cross-Origin Resource Sharing
