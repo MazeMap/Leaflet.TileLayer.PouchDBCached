@@ -27,31 +27,38 @@ L.TileLayer.prototype.options.cacheMaxAge  = 24*3600*1000;
 
 L.TileLayer.include({
 
-	// Overwrites L.TileLayer.prototype._loadTile
-	_loadTile: function(tile, tilePoint) {
-		tile._layer  = this;
-		tile.onerror = this._tileOnError;
+	// Overwrites L.TileLayer.prototype.createTile
+	createTile: function(coords, done) {
+		var tile = document.createElement('img');
 
-		this._adjustTilePoint(tilePoint);
+		tile.onerror = L.bind(this._tileOnError, this, done, tile);
 
-		var tileUrl = this.getTileUrl(tilePoint);
-		this.fire('tileloadstart', {
-			tile: tile,
-			url: tileUrl
-		});
+		if (this.options.crossOrigin) {
+			tile.crossOrigin = '';
+		}
+
+		/*
+		 Alt tag is *set to empty string to keep screen readers from reading URL and for compliance reasons
+		 http://www.w3.org/TR/WCAG20-TECHS/H67
+		 */
+		tile.alt = '';
+
+		var tileUrl = this.getTileUrl(coords);
 
 		if (this.options.useCache && this._canvas) {
-			this._db.get(tileUrl, {revs_info: true}, this._onCacheLookup(tile,tileUrl));
+			this._db.get(tileUrl, {revs_info: true}, this._onCacheLookup(tile, tileUrl, done));
 		} else {
 			// Fall back to standard behaviour
-			tile.onload  = this._tileOnLoad;
-			tile.src = tileUrl;
+			tile.onload = L.bind(this._tileOnLoad, this, done, tile);
 		}
+
+		tile.src = tileUrl;
+		return tile;
 	},
 
 	// Returns a callback (closure over tile/key/originalSrc) to be run when the DB
 	//   backend is finished with a fetch operation.
-	_onCacheLookup: function(tile,tileUrl) {
+	_onCacheLookup: function(tile, tileUrl, done) {
 		return function(err,data) {
 			if (data) {
 				this.fire('tilecachehit', {
@@ -60,10 +67,10 @@ L.TileLayer.include({
 				});
 				if (Date.now() > data.timestamp + this.options.cacheMaxAge && !this.options.useOnlyCache) {
 					// Tile is too old, try to refresh it
-// 					console.log('Tile is too old: ', tileUrl);
+					console.log('Tile is too old: ', tileUrl);
 
 					if (this.options.saveToCache) {
-						tile.onload = this._saveTile(tileUrl, data._revs_info[0].rev);
+						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, data._revs_info[0].rev, done);
 					}
 					tile.crossOrigin = 'Anonymous';
 					tile.src = tileUrl;
@@ -74,8 +81,8 @@ L.TileLayer.include({
 					}
 				} else {
 					// Serve tile from cached data
-// 					console.log('Tile is cached: ', tileUrl);
-					tile.onload  = this._tileOnLoad;
+					console.log('Tile is cached: ', tileUrl);
+					tile.onload = L.bind(this._tileOnLoad, this, done, tile);
 					tile.src = data.dataUrl;    // data.dataUrl is already a base64-encoded PNG image.
 				}
 			} else {
@@ -92,9 +99,9 @@ L.TileLayer.include({
 					// Online, not cached, request the tile normally
 // 					console.log('Requesting tile normally', tileUrl);
 					if (this.options.saveToCache) {
-						tile.onload = this._saveTile(tileUrl);
+						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, null, done);
 					} else {
-						tile.onload  = this._tileOnLoad;
+						tile.onload = L.bind(this._tileOnLoad, this, done, tile);
 					}
 					tile.crossOrigin = 'Anonymous';
 					tile.src = tileUrl;
@@ -107,25 +114,23 @@ L.TileLayer.include({
 	//   when the tile (which is an <img>) is ready.
 	// The handler will delete the document from pouchDB if an existing revision is passed.
 	//   This will keep just the latest valid copy of the image in the cache.
-	_saveTile: function(tileUrl, existingRevision) {
-		return function(ev) {
-			if (this._canvas === null) return;
-			var img = ev.target;
-			L.TileLayer.prototype._tileOnLoad.call(img,ev);
-			this._canvas.width  = img.naturalWidth  || img.width;
-			this._canvas.height = img.naturalHeight || img.height;
+	_saveTile: function(tile, tileUrl, existingRevision, done) {
+		if (this._canvas === null) return;
+		this._canvas.width  = tile.naturalWidth  || tile.width;
+		this._canvas.height = tile.naturalHeight || tile.height;
 
-			var context = this._canvas.getContext('2d');
-			context.drawImage(img, 0, 0);
+		var context = this._canvas.getContext('2d');
+		context.drawImage(tile, 0, 0);
 
-			var dataUrl = this._canvas.toDataURL('image/png');
-			var doc = {dataUrl: dataUrl, timestamp: Date.now()};
+		var dataUrl = this._canvas.toDataURL('image/png');
+		var doc = {dataUrl: dataUrl, timestamp: Date.now()};
 
-			if (existingRevision) {
-				this._db.remove(tileUrl, existingRevision);
-			}
-			this._db.put(doc, tileUrl, doc.timestamp);
-		}.bind(this);
+		if (existingRevision) {
+			this._db.remove(tileUrl, existingRevision);
+		}
+		this._db.put(doc, tileUrl, doc.timestamp);
+
+		if (done) { done(); }
 	},
 
 
@@ -194,7 +199,7 @@ L.TileLayer.include({
 			if (!data) {
 				/// FIXME: Do something on tile error!!
 				tile.onload = function(ev){
-					this._saveTile(url)(ev);
+					this._saveTile(tile, url, null)(ev);
 					this._seedOneTile(tile, remaining, seedData);
 				}.bind(this);
 				tile.crossOrigin = 'Anonymous';
