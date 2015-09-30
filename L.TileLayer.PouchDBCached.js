@@ -22,6 +22,7 @@ L.TileLayer.addInitHook(function() {
 L.TileLayer.prototype.options.useCache     = false;
 L.TileLayer.prototype.options.saveToCache  = true;
 L.TileLayer.prototype.options.useOnlyCache = false;
+L.TileLayer.prototype.options.cacheFormat = 'image/png';
 L.TileLayer.prototype.options.cacheMaxAge  = 24*3600*1000;
 
 
@@ -122,7 +123,7 @@ L.TileLayer.include({
 		var context = this._canvas.getContext('2d');
 		context.drawImage(tile, 0, 0);
 
-		var dataUrl = this._canvas.toDataURL('image/png');
+		var dataUrl = this._canvas.toDataURL(this.options.cacheFormat);
 		var doc = {dataUrl: dataUrl, timestamp: Date.now()};
 
 		if (existingRevision) {
