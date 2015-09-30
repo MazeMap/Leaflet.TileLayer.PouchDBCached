@@ -59,7 +59,7 @@ L.TileLayer.include({
 	// Returns a callback (closure over tile/key/originalSrc) to be run when the DB
 	//   backend is finished with a fetch operation.
 	_onCacheLookup: function(tile, tileUrl, done) {
-		return function(err,data) {
+		return function(err, data) {
 			if (data) {
 				this.fire('tilecachehit', {
 					tile: tile,
@@ -67,7 +67,7 @@ L.TileLayer.include({
 				});
 				if (Date.now() > data.timestamp + this.options.cacheMaxAge && !this.options.useOnlyCache) {
 					// Tile is too old, try to refresh it
-					console.log('Tile is too old: ', tileUrl);
+					//console.log('Tile is too old: ', tileUrl);
 
 					if (this.options.saveToCache) {
 						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, data._revs_info[0].rev, done);
@@ -81,7 +81,7 @@ L.TileLayer.include({
 					}
 				} else {
 					// Serve tile from cached data
-					console.log('Tile is cached: ', tileUrl);
+					//console.log('Tile is cached: ', tileUrl);
 					tile.onload = L.bind(this._tileOnLoad, this, done, tile);
 					tile.src = data.dataUrl;    // data.dataUrl is already a base64-encoded PNG image.
 				}
@@ -93,10 +93,10 @@ L.TileLayer.include({
 				if (this.options.useOnlyCache) {
 					// Offline, not cached
 // 					console.log('Tile not in cache', tileUrl);
-					tile.onload  = this._tileOnLoad;
+					tile.onload = L.Util.falseFn;
 					tile.src = L.Util.emptyImageUrl;
 				} else {
-					// Online, not cached, request the tile normally
+					//Online, not cached, request the tile normally
 // 					console.log('Requesting tile normally', tileUrl);
 					if (this.options.saveToCache) {
 						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, null, done);
@@ -139,28 +139,29 @@ L.TileLayer.include({
 	// Use with care! This can spawn thousands of requests and
 	//   flood tileservers!
 	seed: function(bbox, minZoom, maxZoom) {
+		if (!this.options.useCache) return;
 		if (minZoom > maxZoom) return;
 		if (!this._map) return;
 
 		var queue = [];
 
-		for (var z = minZoom; z<maxZoom; z++) {
+		for (var z = minZoom; z<=maxZoom; z++) {
 
 			var northEastPoint = this._map.project(bbox.getNorthEast(),z);
 			var southWestPoint = this._map.project(bbox.getSouthWest(),z);
 
 			// Calculate tile indexes as per L.TileLayer._update and
 			//   L.TileLayer._addTilesFromCenterOut
-			var tileSize   = this._getTileSize();
+			var tileSize = this.getTileSize(); //_getTileSize(), used to return an integer?
 			var tileBounds = L.bounds(
-				northEastPoint.divideBy(tileSize)._floor(),
-				southWestPoint.divideBy(tileSize)._floor());
+				northEastPoint.divideBy(tileSize.x).floor(), //tileSize.x !== tileSize.y?
+				southWestPoint.divideBy(tileSize.x).floor());
 
 			for (var j = tileBounds.min.y; j <= tileBounds.max.y; j++) {
 				for (var i = tileBounds.min.x; i <= tileBounds.max.x; i++) {
 					point = new L.Point(i, j);
 					point.z = z;
-					queue.push(this.getTileUrl(point));
+					queue.push(this._getTileUrl(point));
 				}
 			}
 		}
@@ -175,6 +176,20 @@ L.TileLayer.include({
 		var tile = this._createTile();
 		tile._layer = this;
 		this._seedOneTile(tile, queue, seedData);
+	},
+
+	_createTile: function () {
+		return document.createElement('img');
+	},
+
+	_getTileUrl: function (coords) {
+		return L.Util.template(this._url, L.extend({
+			r: this.options.detectRetina && L.Browser.retina && this.options.maxZoom > 0 ? '@2x' : '',
+			s: this._getSubdomain(coords),
+			x: coords.x,
+			y: this.options.tms ? this._globalTileRange.max.y - coords.y : coords.y,
+			z: coords.z
+		}, this.options));
 	},
 
 	// Uses a defined tile to eat through one item in the queue and
@@ -195,11 +210,11 @@ L.TileLayer.include({
 
 		var url = remaining.pop();
 
-		this._db.get(url, function(err,data){
+		this._db.get(url, function(err, data) {
 			if (!data) {
 				/// FIXME: Do something on tile error!!
-				tile.onload = function(ev){
-					this._saveTile(tile, url, null)(ev);
+				tile.onload = function(ev) {
+					this._saveTile(tile, url, null); //(ev)
 					this._seedOneTile(tile, remaining, seedData);
 				}.bind(this);
 				tile.crossOrigin = 'Anonymous';
