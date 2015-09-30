@@ -152,10 +152,10 @@ L.TileLayer.include({
 
 			// Calculate tile indexes as per L.TileLayer._update and
 			//   L.TileLayer._addTilesFromCenterOut
-			var tileSize = this.getTileSize(); //_getTileSize(), used to return an integer?
+			var tileSize = this.getTileSize();
 			var tileBounds = L.bounds(
-				northEastPoint.divideBy(tileSize.x).floor(), //tileSize.x !== tileSize.y?
-				southWestPoint.divideBy(tileSize.x).floor());
+				L.point(Math.floor(northEastPoint.x / tileSize.x), Math.floor(northEastPoint.y / tileSize.y)),
+				L.point(Math.floor(southWestPoint.x / tileSize.x), Math.floor(southWestPoint.y / tileSize.y)));
 
 			for (var j = tileBounds.min.y; j <= tileBounds.max.y; j++) {
 				for (var i = tileBounds.min.x; i <= tileBounds.max.x; i++) {
@@ -182,13 +182,20 @@ L.TileLayer.include({
 		return document.createElement('img');
 	},
 
+	// Modified L.TileLayer.getTileUrl, this will use the zoom given by the parameter coords
+	//  instead of the maps current zoomlevel.
 	_getTileUrl: function (coords) {
+		var zoom = coords.z;
+		if (this.options.zoomReverse) {
+			zoom = this.options.maxZoom - zoom;
+		}
+		zoom += this.options.zoomOffset;
 		return L.Util.template(this._url, L.extend({
 			r: this.options.detectRetina && L.Browser.retina && this.options.maxZoom > 0 ? '@2x' : '',
 			s: this._getSubdomain(coords),
 			x: coords.x,
 			y: this.options.tms ? this._globalTileRange.max.y - coords.y : coords.y,
-			z: coords.z
+			z: this.options.maxNativeZoom ? Math.min(zoom, options.maxNativeZoom) : zoom
 		}, this.options));
 	},
 
