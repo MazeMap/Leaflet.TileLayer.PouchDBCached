@@ -196,7 +196,7 @@ L.TileLayer.include({
 			s: this._getSubdomain(coords),
 			x: coords.x,
 			y: this.options.tms ? this._globalTileRange.max.y - coords.y : coords.y,
-			z: this.options.maxNativeZoom ? Math.min(zoom, options.maxNativeZoom) : zoom
+			z: this.options.maxNativeZoom ? Math.min(zoom, this.options.maxNativeZoom) : zoom
 		}, this.options));
 	},
 
