@@ -19,5 +19,10 @@
   "bugs": {
     "url": "https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached/issues"
   },
-  "homepage": "https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached#readme"
+  "homepage": "https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached#readme",
+  "devDependencies": {},
+  "dependencies": {
+    "leaflet": "^0.7.3",
+    "pouchdb": "^3.3.1"
+  }
 }
