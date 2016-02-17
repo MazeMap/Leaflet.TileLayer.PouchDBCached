@@ -1,0 +1,28 @@
+{
+  "name": "leaflet.tilelayer.pouchdbcached",
+  "version": "0.2.0",
+  "description": "Allows all TileLayers to cache into PouchDB for offline use",
+  "main": "L.TileLayer.PouchDBCached.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached.git"
+  },
+  "keywords": [
+    "leaflet",
+    "pouchdb"
+  ],
+  "author": "Iván Sánchez Ortega <ivan@mazemap.no>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached/issues"
+  },
+  "homepage": "https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached#readme",
+  "devDependencies": {},
+  "dependencies": {
+    "leaflet": "^0.7.3",
+    "pouchdb": "^5.2.1"
+  }
+}
