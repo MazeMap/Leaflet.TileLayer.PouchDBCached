@@ -19,10 +19,26 @@ L.TileLayer.addInitHook(function() {
 	}
 });
 
+// 🍂namespace TileLayer
+// 🍂section PouchDB tile caching options
+// 🍂option useCache: Boolean = false
+// Whether to use a PouchDB cache on this tile layer, or not
 L.TileLayer.prototype.options.useCache     = false;
+
+// 🍂option saveToCache: Boolean = true
+// When caching is enabled, whether to save new tiles to the cache or not
 L.TileLayer.prototype.options.saveToCache  = true;
+
+// 🍂option useOnlyCache: Boolean = false
+// When caching is enabled, whether to request new tiles from the network or not
 L.TileLayer.prototype.options.useOnlyCache = false;
+
+// 🍂option useCache: String = 'image/png'
+// The image format to be used when saving the tile images in the cache
 L.TileLayer.prototype.options.cacheFormat = 'image/png';
+
+// 🍂option cacheMaxAge: Number = 24*3600*1000
+// Maximum age of the cache, in seconds
 L.TileLayer.prototype.options.cacheMaxAge  = 24*3600*1000;
 
 
@@ -142,11 +158,10 @@ L.TileLayer.include({
 		if (done) { done(); }
 	},
 
-
-	// Seeds the cache given a bounding box (latLngBounds), and
-	//   the minimum and maximum zoom levels
-	// Use with care! This can spawn thousands of requests and
-	//   flood tileservers!
+	// 🍂section PouchDB tile caching options
+	// 🍂method seed(bbox: LatLngBounds, minZoom: Number, maxZoom: Number): this
+	// Starts seeding the cache given a bounding box and the minimum/maximum zoom levels
+	// Use with care! This can spawn thousands of requests and flood tileservers!
 	seed: function(bbox, minZoom, maxZoom) {
 		if (!this.options.useCache) return;
 		if (minZoom > maxZoom) return;
@@ -185,6 +200,7 @@ L.TileLayer.include({
 		var tile = this._createTile();
 		tile._layer = this;
 		this._seedOneTile(tile, queue, seedData);
+		return this;
 	},
 
 	_createTile: function () {
