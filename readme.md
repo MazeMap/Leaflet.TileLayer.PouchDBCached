@@ -6,21 +6,31 @@ There is a [demo](http://mazemap.github.io/Leaflet.TileLayer.PouchDBCached/demo.
 
 # Dependencies
 
-Works with Leaflet 1.0-beta1 and PouchDB 3.3.1 (or greater). Consider using Bower for fetching the right dependencies.
+Works with Leaflet 1.0.0 and PouchDB 5.2.0 (or greater).
+
+You probably want to load Leaflet, PouchDB and Leaflet.TileLayer.PouchDB like so:
+
+```html
+	<script src="https://unpkg.com/leaflet@^1.0.0/dist/leaflet-src.js"></script>
+	<script src="https://unpkg.com/pouchdb@^5.2.0/dist/pouchdb.js"></script>
+	<script src="https://unpkg.com/leaflet.tilelayer.pouchdbcached@latest/L.TileLayer.PouchDBCached.js"></script>
+```
 
 If you are still using Leaflet 0.7.x, the latest compatible release is [v0.1.0](https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached/releases/tag/v0.1.0).
+
 
 # Usage
 
 The plugin modifies the core `L.TileLayer` class, so it should be possible to cache any tile layer.
 
-To use, add the option `useCache` with a value of `true` when instantiating your layer, like so:
+To use, add the option `useCache` with a value of `true` when instantiating your layer. You probably want to use Leaflet's `crossOrigin` option, like so:
 
 ```
 var layer = L.tileLayer('https://whatever/{z}/{x}/{y}.png', {
 	maxZoom: 18,
 
-	useCache: true
+	useCache: true,
+	crossOrigin: true
 });
 ```
 
@@ -38,6 +48,9 @@ New events available are as follows:
 
 * `tilecachehit`: Fired when a tile has been found in the tile cache. The event includes data as per http://leafletjs.com/reference.html#tile-event
 * `tilecachemiss`: Like `tilecachehit`, but is fired when the tile has *not* been found in the cache.
+* `tilecacheerror`: Fired when there was an error trying to save a tile in the cache. The event data includes:
+ * `tile`: A reference to the failed tile
+ * `error`: The error message, probably related to CORS.
 * `seedstart`: Fired when a layer cache has started seeding. The event data includes:
  * `bbox`: bounding box for the seed operation, as per the `L.TileLayer.seed()` function call.
  * `minZoom` and `maxZoom`: zoom levels the seed operation, as per the `L.TileLayer.seed()` function call.

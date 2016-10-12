@@ -5,28 +5,30 @@
 	<meta charset="utf-8" />
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-1.0.0-b1/leaflet.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
 </head>
 <body>
 	<div id="map" style="width: 600px; height: 400px"></div>
 
 	<button onclick="seed()">Seed world from Z=0 until Z=4</div>
 
-	<script src="http://cdn.leafletjs.com/leaflet-1.0.0-b1/leaflet-src.js"></script>
-	<script src="bower_components/pouchdb/dist/pouchdb.js"></script>
+	<script src="https://unpkg.com/leaflet@^1.0.0/dist/leaflet-src.js"></script>
+	<script src="https://unpkg.com/pouchdb@^5.0.0/dist/pouchdb.js"></script>
+
 	<script src="L.TileLayer.PouchDBCached.js"></script>
 	<script>
 
 // 		var map = L.map('map').setView([63.41784,10.40359], 5);
 		var map = L.map('map').setView([40,-100], 4);
 
-		var layer = L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+		var layer = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png', {
 			maxZoom: 18,
 			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
 				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
 				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
 			id: 'examples.map-i875mjb7',
-			useCache: true
+			useCache: true,
+			crossOrigin: true
 		});
 
 		// Listen to cache hits and misses and spam the console
@@ -37,12 +39,11 @@
 		layer.on('tilecachemiss',function(ev){
 			console.log('Cache miss: ', ev.url);
 		});
+		layer.on('tilecacheerror',function(ev){
+			console.log('Cache error: ', ev.tile, ev.error);
+		});
 
 		layer.addTo(map);
-
-
-
-
 
 		var wmsLayer = L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
 			layers: 'nexrad-n0r-900913',
@@ -51,7 +52,8 @@
 			attribution: "Weather data © 2012 IEM Nexrad",
 
 			useCache: true,
-			maxAge: 30 * 1000	// 30 seconds
+			maxAge: 30 * 1000,	// 30 seconds
+			crossOrigin: true
 		});
 
 		wmsLayer.addTo(map);

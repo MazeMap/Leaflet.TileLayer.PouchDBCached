@@ -123,12 +123,20 @@ L.TileLayer.include({
 		var context = this._canvas.getContext('2d');
 		context.drawImage(tile, 0, 0);
 
-		var dataUrl = this._canvas.toDataURL(this.options.cacheFormat);
+		var dataUrl;
+		try {
+			dataUrl = this._canvas.toDataURL(this.options.cacheFormat);
+		} catch(err) {
+			this.fire('tilecacheerror', { tile: tile, error: err });
+			return done();
+		}
 		var doc = {dataUrl: dataUrl, timestamp: Date.now()};
 
 		if (existingRevision) {
 			this._db.remove(tileUrl, existingRevision);
 		}
+		/// FIXME: There is a deprecation warning about parameters in the
+		///   this._db.put() call.
 		this._db.put(doc, tileUrl, doc.timestamp);
 
 		if (done) { done(); }
