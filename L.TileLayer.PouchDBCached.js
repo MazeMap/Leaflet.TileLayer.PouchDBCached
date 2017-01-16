@@ -38,7 +38,7 @@ L.TileLayer.prototype.options.useOnlyCache = false;
 L.TileLayer.prototype.options.cacheFormat = 'image/png';
 
 // 🍂option cacheMaxAge: Number = 24*3600*1000
-// Maximum age of the cache, in seconds
+// Maximum age of the cache, in milliseconds
 L.TileLayer.prototype.options.cacheMaxAge  = 24*3600*1000;
 
 
