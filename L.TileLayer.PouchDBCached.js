@@ -149,12 +149,23 @@ L.TileLayer.include({
 		var doc = {dataUrl: dataUrl, timestamp: Date.now()};
 
 		if (existingRevision) {
-			this._db.remove(tileUrl, existingRevision);
+			this._db.get(tileUrl).then(function(doc) {
+                return this._db.remove(tileUrl);
+            }).then(function(response) {
+                // handle response
+            }).catch(function(err) {
+                console.log(err);
+            });
 		}
 		/// FIXME: There is a deprecation warning about parameters in the
 		///   this._db.put() call.
-		this._db.put(doc, tileUrl, doc.timestamp);
-
+		this._db.put(doc).catch(function(err) {
+            if (err.name === 'conflict') {
+                // conflict!
+            } else {
+                // some other error
+            }
+        });
 		if (done) { done(); }
 	},
 
