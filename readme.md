@@ -28,7 +28,6 @@ To use, add the option `useCache` with a value of `true` when instantiating your
 ```
 var layer = L.tileLayer('https://whatever/{z}/{x}/{y}.png', {
 	maxZoom: 18,
-
 	useCache: true,
 	crossOrigin: true
 });
