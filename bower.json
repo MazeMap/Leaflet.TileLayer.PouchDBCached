@@ -1,6 +1,6 @@
 {
   "name": "Leaflet.TileLayer.PouchDBCached",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "authors": [
     "Iván Sánchez Ortega <ivan@mazemap.no>"
   ],
@@ -20,7 +20,7 @@
     "tests"
   ],
   "dependencies": {
-    "leaflet": "~0.7.3",
-    "pouchdb": "~3.3.1"
+    "leaflet": "^1.1.0",
+    "pouchdb": "^6.3.4"
   }
 }

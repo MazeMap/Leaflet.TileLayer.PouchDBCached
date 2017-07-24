@@ -1,79 +1,52 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC>
+
+<html style="height: 100%; width: 100%;">
 <head>
 	<title>Leaflet PouchDB Tiles example</title>
-	<meta charset="utf-8" />
-
+	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-1.0.0-b1/leaflet.css" />
-</head>
-<body>
-	<div id="map" style="width: 600px; height: 400px"></div>
-
-	<button onclick="seed()">Seed world from Z=0 until Z=4</div>
-
-	<script src="http://cdn.leafletjs.com/leaflet-1.0.0-b1/leaflet-src.js"></script>
-	<script src="bower_components/pouchdb/dist/pouchdb.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.1.0/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.1.0/dist/leaflet.js"></script>
+	<script src="https://unpkg.com/pouchdb@^6.3.4/dist/pouchdb.js"></script>
 	<script src="L.TileLayer.PouchDBCached.js"></script>
-	<script>
+</head>
 
+<body style="margin: 0px; padding: 0px;">
+	<div id="page-wrapper" style="margin-left: auto; margin-right: auto; padding: 0px; width: 100%;">
+		<div id="map" style="display: block; height: 100%;"></div>
+	</div>
+
+	<script defer="defer">
 // 		var map = L.map('map').setView([63.41784,10.40359], 5);
 		var map = L.map('map').setView([40,-100], 4);
 
-		var layer = L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
-			maxZoom: 18,
-			attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
-				'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
-				'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+		var layer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 			id: 'examples.map-i875mjb7',
+			maxZoom: 18,
+			crossOrigin: true,
 			useCache: true
 		});
-
 		// Listen to cache hits and misses and spam the console
 		// The cache hits and misses are only from this layer, not from the WMS layer.
-		layer.on('tilecachehit',function(ev){
-			console.log('Cache hit: ', ev.url);
+		layer.on('tilecachehit',function(e) {
+			console.log('Cache hit: ', e.url);
 		});
-		layer.on('tilecachemiss',function(ev){
-			console.log('Cache miss: ', ev.url);
+		layer.on('tilecachemiss',function(e) {
+			console.log('Cache miss: ', e.url);
 		});
-
 		layer.addTo(map);
 
-
-
-
-
-		var wmsLayer = L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
-			layers: 'nexrad-n0r-900913',
+ 		var wmsLayer = L.tileLayer.wms('http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi', {
+ 			attribution: "Weather data © 2012 IEM Nexrad",
 			format: 'image/png',
+			layers: 'nexrad-n0r-900913',
+			maxAge: 30 * 1000,	// 30 seconds
 			transparent: true,
-			attribution: "Weather data © 2012 IEM Nexrad",
-
-			useCache: true,
-			maxAge: 30 * 1000	// 30 seconds
+			crossOrigin: true,
+			useCache: true
 		});
-
 		wmsLayer.addTo(map);
-
-
-
-
-		// Seed the base layer, for the whole world, for zoom levels 0 through 4.
-		function seed() {
-			var bbox = L.latLngBounds(L.latLng(-85,-180), L.latLng(85,180));
-			layer.seed( bbox, 0, 4 );
-		}
-
-		// Display seed progress on console
-		layer.on('seedprogress', function(seedData){
-			var percent = 100 - Math.floor(seedData.remainingLength / seedData.queueLength * 100);
-			console.log('Seeding ' + percent + '% done');
-		});
-		layer.on('seedend', function(seedData){
-			console.log('Cache seeding complete');
-		});
-
 	</script>
 </body>
 </html>
