@@ -20,7 +20,7 @@
     "tests"
   ],
   "dependencies": {
-    "leaflet": "^1.1.0",
-    "pouchdb": "^6.3.4"
+    "leaflet": "^1.0.0",
+    "pouchdb": "^6.0.0"
   }
 }
