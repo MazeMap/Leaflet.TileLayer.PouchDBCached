@@ -8,7 +8,11 @@ L.TileLayer.addInitHook(function() {
 		return;
 	}
 
-	this._db = new PouchDB('offline-tiles');
+	if (this.options.dbOptions) {
+		this._db = new PouchDB('offline-tiles', this.options.dbOptions);
+	} else {
+		this._db = new PouchDB('offline-tiles');
+	}
 	this._canvas = document.createElement('canvas');
 
 	if (!(this._canvas.getContext && this._canvas.getContext('2d'))) {
