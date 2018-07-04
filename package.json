@@ -22,7 +22,7 @@
   "homepage": "https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached#readme",
   "devDependencies": {
     "leaflet": "^1.0.0",
-    "pouchdb": "^6.0.0"
+    "pouchdb-browser": "^7.0.0"
   },
   "dependencies": {}
 }

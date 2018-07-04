@@ -35,6 +35,7 @@ var layer = L.tileLayer('https://whatever/{z}/{x}/{y}.png', {
 
 Options available are as follows:
 
+* `dbName`: name of the pouchDB the cached tiles are stored in. Defaults to 'offline-tiles'.
 * `useCache`: set to true in order to enable the cache. This option must be set at initialization time.
 * `saveToCache`: Whether to save new tiles to the cache or not. Defaults to true.
 * `useOnlyCache`: Whether to fetch tiles from the network or not. Defaults to false.

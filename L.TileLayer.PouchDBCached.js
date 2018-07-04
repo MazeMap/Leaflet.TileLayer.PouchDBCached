@@ -8,10 +8,11 @@ L.TileLayer.addInitHook(function() {
 		return;
 	}
 
+	var dbName = this.options.dbName || 'offline-tiles';
 	if (this.options.dbOptions) {
-		this._db = new PouchDB('offline-tiles', this.options.dbOptions);
+		this._db = new PouchDB(dbName, this.options.dbOptions);
 	} else {
-		this._db = new PouchDB('offline-tiles');
+		this._db = new PouchDB(dbName);
 	}
 	this._canvas = document.createElement('canvas');
 
