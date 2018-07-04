@@ -2,7 +2,7 @@
 
 Allows all Leaflet TileLayers to cache into PouchDB for offline use, in a transparent fashion.
 
-There is a [demo](http://mazemap.github.io/Leaflet.TileLayer.PouchDBCached/demo.html) available, which shows cache hits/misses/seeds in the browser's developer console.
+There is a [demo](http://nikolauskrismer/Leaflet.TileLayer.PouchDBCached/demo.html) available, which shows cache hits/misses/seeds in the browser's developer console.
 
 # Dependencies
 
