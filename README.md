@@ -6,13 +6,13 @@ There is a [demo](https://nikolauskrismer.github.io/Leaflet.TileLayer.PouchDBCac
 
 # Dependencies
 
-Works with Leaflet 1.0.0 (or greater) and PouchDB 6.0.0 (or greater).
+Works with Leaflet 1.0.0 (up to leaflet 1.3.1) and PouchDB 6 or 7.
 
 You probably want to load Leaflet, PouchDB and Leaflet.TileLayer.PouchDB like so:
 
 ```html
-	<script src="https://unpkg.com/leaflet@^1.1.0/dist/leaflet-src.js"></script>
-	<script src="https://unpkg.com/pouchdb@^6.3.4/dist/pouchdb.js"></script>
+	<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet-src.js"></script>
+	<script src="https://unpkg.com/pouchdb@7.0.0/dist/pouchdb.js"></script>
 	<script src="https://unpkg.com/leaflet.tilelayer.pouchdbcached@latest/L.TileLayer.PouchDBCached.js"></script>
 ```
 
@@ -71,7 +71,7 @@ In other words: if chrome shows a grey map, and displays CORS-related messages i
 
 # Underlying cache structure
 
-This plugin uses an instance of PouchDB, named `offline-tiles`. PouchDB is a key-value store, so the key is the URL of a tile, and the value is a plain object containing a timestamp and the base64-encoded image.
+This plugin uses an instance of PouchDB, named `offline-tiles` by default. PouchDB is a key-value store, so the key is the URL of a tile, and the value is a plain object containing a timestamp and the base64-encoded image.
 
 
 # License and stuff
