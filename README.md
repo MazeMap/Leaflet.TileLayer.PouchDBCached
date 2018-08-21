@@ -2,7 +2,7 @@
 
 Allows all Leaflet TileLayers to cache into PouchDB for offline use, in a transparent fashion.
 
-There is a [demo](https://nikolauskrismer.github.io/Leaflet.TileLayer.PouchDBCached/demo.html) available, which shows cache hits/misses in the browser's developer console. Another [demo](https://nikolauskrismer.github.io/Leaflet.TileLayer.PouchDBCached/demoSeeder.html) is available that includes seeding of cache tiles.
+There is a [demo](https://nikolauskrismer.github.io/Leaflet.TileLayer.PouchDBCached/demo.html) available, which shows cache hits/misses in the browser's developer console.
 
 ## Dependencies
 
