@@ -7,7 +7,7 @@ There is a [demo](https://nikolauskrismer.github.io/Leaflet.TileLayer.PouchDBCac
 ## Dependencies
 
 Works with Leaflet 1.0.0 (or newer) and PouchDB 6 or 7.
-There is a problem that prevents this to work with leaflet 1.3.2 or 1.3.3 (bug #Leaflet/Leaflet#6245)
+There is a problem that prevents this to work with leaflet 1.3.2 or 1.3.3 (issue Leaflet/Leaflet#6245)
 However, this has been fixed in leaflet 1.3.4, so everything works fine from versions >= 1.3.4 again.
 
 You probably want to load Leaflet, PouchDB and Leaflet.TileLayer.PouchDB like so:
