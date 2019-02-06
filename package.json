@@ -1,9 +1,10 @@
 {
   "name": "leaflet.tilelayer.pouchdbcached",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Allows all TileLayers to cache into PouchDB for offline use",
   "main": "L.TileLayer.PouchDBCached.js",
   "scripts": {
+    "lintfix": "prettier --write *.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -22,7 +23,14 @@
   "homepage": "https://github.com/MazeMap/Leaflet.TileLayer.PouchDBCached#readme",
   "devDependencies": {
     "leaflet": "^1.0.0",
-    "pouchdb": "^5.2.1"
+    "pouchdb": "^7.0.0"
   },
+  "prettier": {
+    "printWidth": 85,
+    "tabWidth": 4,
+    "useTabs": true,
+    "trailingComma": "es5",
+    "arrowParens": "always"
+    },
   "dependencies": {}
 }
