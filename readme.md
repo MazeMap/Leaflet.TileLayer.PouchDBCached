@@ -6,7 +6,7 @@ There is a [demo](http://mazemap.github.io/Leaflet.TileLayer.PouchDBCached/demo.
 
 # Dependencies
 
-Works with Leaflet 1.0.0 and PouchDB 5.2.0 (or greater).
+Tested with Leaflet 1.4.0 and PouchDB 7.0.0.
 
 You probably want to load Leaflet, PouchDB and Leaflet.TileLayer.PouchDB like so:
 
