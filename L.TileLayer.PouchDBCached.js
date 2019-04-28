@@ -8,7 +8,12 @@ L.TileLayer.addInitHook(function() {
 		return;
 	}
 
-	this._db = new PouchDB('offline-tiles');
+	var dbName = this.options.dbName || 'offline-tiles';
+	if (this.options.dbOptions) {
+		this._db = new PouchDB(dbName, this.options.dbOptions);
+	} else {
+		this._db = new PouchDB(dbName);
+	}
 	this._canvas = document.createElement('canvas');
 
 	if (!(this._canvas.getContext && this._canvas.getContext('2d'))) {
@@ -19,9 +24,26 @@ L.TileLayer.addInitHook(function() {
 	}
 });
 
+// 🍂namespace TileLayer
+// 🍂section PouchDB tile caching options
+// 🍂option useCache: Boolean = false
+// Whether to use a PouchDB cache on this tile layer, or not
 L.TileLayer.prototype.options.useCache     = false;
+
+// 🍂option saveToCache: Boolean = true
+// When caching is enabled, whether to save new tiles to the cache or not
 L.TileLayer.prototype.options.saveToCache  = true;
+
+// 🍂option useOnlyCache: Boolean = false
+// When caching is enabled, whether to request new tiles from the network or not
 L.TileLayer.prototype.options.useOnlyCache = false;
+
+// 🍂option useCache: String = 'image/png'
+// The image format to be used when saving the tile images in the cache
+L.TileLayer.prototype.options.cacheFormat = 'image/png';
+
+// 🍂option cacheMaxAge: Number = 24*3600*1000
+// Maximum age of the cache, in milliseconds
 L.TileLayer.prototype.options.cacheMaxAge  = 24*3600*1000;
 
 
@@ -59,7 +81,7 @@ L.TileLayer.include({
 	// Returns a callback (closure over tile/key/originalSrc) to be run when the DB
 	//   backend is finished with a fetch operation.
 	_onCacheLookup: function(tile, tileUrl, done) {
-		return function(err,data) {
+		return function(err, data) {
 			if (data) {
 				this.fire('tilecachehit', {
 					tile: tile,
@@ -67,7 +89,7 @@ L.TileLayer.include({
 				});
 				if (Date.now() > data.timestamp + this.options.cacheMaxAge && !this.options.useOnlyCache) {
 					// Tile is too old, try to refresh it
-					console.log('Tile is too old: ', tileUrl);
+					//console.log('Tile is too old: ', tileUrl);
 
 					if (this.options.saveToCache) {
 						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, data._revs_info[0].rev, done);
@@ -81,7 +103,7 @@ L.TileLayer.include({
 					}
 				} else {
 					// Serve tile from cached data
-					console.log('Tile is cached: ', tileUrl);
+					//console.log('Tile is cached: ', tileUrl);
 					tile.onload = L.bind(this._tileOnLoad, this, done, tile);
 					tile.src = data.dataUrl;    // data.dataUrl is already a base64-encoded PNG image.
 				}
@@ -93,10 +115,10 @@ L.TileLayer.include({
 				if (this.options.useOnlyCache) {
 					// Offline, not cached
 // 					console.log('Tile not in cache', tileUrl);
-					tile.onload  = this._tileOnLoad;
+					tile.onload = L.Util.falseFn;
 					tile.src = L.Util.emptyImageUrl;
 				} else {
-					// Online, not cached, request the tile normally
+					//Online, not cached, request the tile normally
 // 					console.log('Requesting tile normally', tileUrl);
 					if (this.options.saveToCache) {
 						tile.onload = L.bind(this._saveTile, this, tile, tileUrl, null, done);
@@ -122,45 +144,65 @@ L.TileLayer.include({
 		var context = this._canvas.getContext('2d');
 		context.drawImage(tile, 0, 0);
 
-		var dataUrl = this._canvas.toDataURL('image/png');
-		var doc = {dataUrl: dataUrl, timestamp: Date.now()};
-
-		if (existingRevision) {
-			this._db.remove(tileUrl, existingRevision);
+		var dataUrl;
+		try {
+			dataUrl = this._canvas.toDataURL(this.options.cacheFormat);
+		} catch(err) {
+			this.fire('tilecacheerror', { tile: tile, error: err });
+			return done();
 		}
-		this._db.put(doc, tileUrl, doc.timestamp);
 
-		if (done) { done(); }
+		var doc = {_id: tileUrl, dataUrl: dataUrl, timestamp: Date.now()};
+	    if (existingRevision) {
+	      this._db.get(tileUrl).then(function(doc) {
+	          return this._db.put({
+	              _id: doc._id,
+	              _rev: doc._rev,
+	              dataUrl: dataUrl,
+	              timestamp: Date.now()
+	          });
+	      }.bind(this)).then(function(response) {
+	        //console.log('_saveTile update: ', response);
+	      });
+	    } else {
+	      this._db.put(doc).then( function(doc) {
+	        //console.log('_saveTile insert: ', doc);
+	      });
+	    }
+
+	    if (done) {
+	      done();
+	    }
 	},
 
-
-	// Seeds the cache given a bounding box (latLngBounds), and
-	//   the minimum and maximum zoom levels
-	// Use with care! This can spawn thousands of requests and
-	//   flood tileservers!
+	// 🍂section PouchDB tile caching options
+	// 🍂method seed(bbox: LatLngBounds, minZoom: Number, maxZoom: Number): this
+	// Starts seeding the cache given a bounding box and the minimum/maximum zoom levels
+	// Use with care! This can spawn thousands of requests and flood tileservers!
 	seed: function(bbox, minZoom, maxZoom) {
+		if (!this.options.useCache) return;
 		if (minZoom > maxZoom) return;
 		if (!this._map) return;
 
 		var queue = [];
 
-		for (var z = minZoom; z<maxZoom; z++) {
+		for (var z = minZoom; z<=maxZoom; z++) {
 
 			var northEastPoint = this._map.project(bbox.getNorthEast(),z);
 			var southWestPoint = this._map.project(bbox.getSouthWest(),z);
 
 			// Calculate tile indexes as per L.TileLayer._update and
 			//   L.TileLayer._addTilesFromCenterOut
-			var tileSize   = this._getTileSize();
+			var tileSize = this.getTileSize();
 			var tileBounds = L.bounds(
-				northEastPoint.divideBy(tileSize)._floor(),
-				southWestPoint.divideBy(tileSize)._floor());
+				L.point(Math.floor(northEastPoint.x / tileSize.x), Math.floor(northEastPoint.y / tileSize.y)),
+				L.point(Math.floor(southWestPoint.x / tileSize.x), Math.floor(southWestPoint.y / tileSize.y)));
 
 			for (var j = tileBounds.min.y; j <= tileBounds.max.y; j++) {
 				for (var i = tileBounds.min.x; i <= tileBounds.max.x; i++) {
 					point = new L.Point(i, j);
 					point.z = z;
-					queue.push(this.getTileUrl(point));
+					queue.push(this._getTileUrl(point));
 				}
 			}
 		}
@@ -175,6 +217,28 @@ L.TileLayer.include({
 		var tile = this._createTile();
 		tile._layer = this;
 		this._seedOneTile(tile, queue, seedData);
+		return this;
+	},
+
+	_createTile: function () {
+		return new Image();
+	},
+
+	// Modified L.TileLayer.getTileUrl, this will use the zoom given by the parameter coords
+	//  instead of the maps current zoomlevel.
+	_getTileUrl: function (coords) {
+		var zoom = coords.z;
+		if (this.options.zoomReverse) {
+			zoom = this.options.maxZoom - zoom;
+		}
+		zoom += this.options.zoomOffset;
+		return L.Util.template(this._url, L.extend({
+			r: this.options.detectRetina && L.Browser.retina && this.options.maxZoom > 0 ? '@2x' : '',
+			s: this._getSubdomain(coords),
+			x: coords.x,
+			y: this.options.tms ? this._globalTileRange.max.y - coords.y : coords.y,
+			z: this.options.maxNativeZoom ? Math.min(zoom, this.options.maxNativeZoom) : zoom
+		}, this.options));
 	},
 
 	// Uses a defined tile to eat through one item in the queue and
@@ -195,11 +259,14 @@ L.TileLayer.include({
 
 		var url = remaining.pop();
 
-		this._db.get(url, function(err,data){
+		this._db.get(url, function(err, data) {
 			if (!data) {
-				/// FIXME: Do something on tile error!!
-				tile.onload = function(ev){
-					this._saveTile(tile, url, null)(ev);
+				tile.onload = function(e) {
+					this._saveTile(tile, url, null);
+					this._seedOneTile(tile, remaining, seedData);
+				}.bind(this);
+				tile.onerror = function(e) {
+					// Could not load tile, let's continue anyways.
 					this._seedOneTile(tile, remaining, seedData);
 				}.bind(this);
 				tile.crossOrigin = 'Anonymous';
@@ -208,9 +275,6 @@ L.TileLayer.include({
 				this._seedOneTile(tile, remaining, seedData);
 			}
 		}.bind(this));
-
 	}
 
 });
-
-
