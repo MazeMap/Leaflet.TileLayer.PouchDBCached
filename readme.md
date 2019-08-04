@@ -40,6 +40,7 @@ Options available are as follows:
 * `saveToCache`: Whether to save new tiles to the cache or not. Defaults to true.
 * `useOnlyCache`: Whether to fetch tiles from the network or not. Defaults to false.
 * `cacheMaxAge`: Time, in milliseconds, for any given tile to be considered 'fresh'. Tiles older than this value will be re-requested from the network. Defaults to 24 hours.
+* `cacheURLMask`: A regular expresstion to mask the URL so that access tokens and the sort won't cause cache misses. (e.g. /access_token=[^&]*/)
 
 New functions available are as follows:
 * `seed`: Starts seeding the cache for a given bounding box (a `L.LatLngBounds`), and between the two given zoom levels.

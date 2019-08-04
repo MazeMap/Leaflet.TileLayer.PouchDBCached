@@ -69,10 +69,11 @@ L.TileLayer.include({
 		tile.alt = "";
 
 		var tileUrl = this.getTileUrl(coords);
+		var cacheName = this._maskURL(tileUrl);
 
 		if (this.options.useCache) {
 			this._db.get(
-				tileUrl,
+				cacheName,
 				{ revs_info: true },
 				this._onCacheLookup(tile, tileUrl, done)
 			);
@@ -84,7 +85,15 @@ L.TileLayer.include({
 
 		return tile;
 	},
+	_maskURL: function(tileUrl) {
+		// Mask the access token.
+		if (this.options.cacheURLMask) {
+			var cacheName = tileUrl.replace(this.options.cacheURLMask, "");
+			return cacheName;
+		}
 
+		return tileUrl;
+	},
 	// Returns a callback (closure over tile/key/originalSrc) to be run when the DB
 	//   backend is finished with a fetch operation.
 	_onCacheLookup: function(tile, tileUrl, done) {
@@ -104,7 +113,7 @@ L.TileLayer.include({
 		});
 
 		// Read the attachment as blob
-		this._db.getAttachment(tileUrl, "tile").then(
+		this._db.getAttachment(data._id, "tile").then(
 			function(blob) {
 				var url = URL.createObjectURL(blob);
 
@@ -190,16 +199,17 @@ L.TileLayer.include({
 
 		canvas.toBlob(
 			function(blob) {
+				var maskedId = this._maskURL(tileUrl);
 				this._db
 					.put({
-						_id: tileUrl,
+						_id: maskedId,
 						_rev: existingRevision,
 						timestamp: Date.now(),
 					})
 					.then(
 						function(status) {
 							return this._db.putAttachment(
-								tileUrl,
+								maskedId,
 								"tile",
 								status.rev,
 								blob,
