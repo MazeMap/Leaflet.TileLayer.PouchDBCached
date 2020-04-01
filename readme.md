@@ -25,7 +25,7 @@ The plugin modifies the core `L.TileLayer` class, so it should be possible to ca
 
 To use, add the option `useCache` with a value of `true` when instantiating your layer. You probably want to use Leaflet's `crossOrigin` option, like so:
 
-```
+```javascript
 var layer = L.tileLayer('https://whatever/{z}/{x}/{y}.png', {
 	maxZoom: 18,
 
