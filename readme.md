@@ -6,7 +6,7 @@ There is a [demo](http://mazemap.github.io/Leaflet.TileLayer.PouchDBCached/demo.
 
 # Dependencies
 
-Works with Leaflet 1.0.0 and PouchDB 5.2.0 (or greater).
+Tested with Leaflet 1.4.0 and PouchDB 7.0.0.
 
 You probably want to load Leaflet, PouchDB and Leaflet.TileLayer.PouchDB like so:
 
@@ -25,7 +25,7 @@ The plugin modifies the core `L.TileLayer` class, so it should be possible to ca
 
 To use, add the option `useCache` with a value of `true` when instantiating your layer. You probably want to use Leaflet's `crossOrigin` option, like so:
 
-```
+```javascript
 var layer = L.tileLayer('https://whatever/{z}/{x}/{y}.png', {
 	maxZoom: 18,
 

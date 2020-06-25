@@ -5,15 +5,15 @@
 	<meta charset="utf-8" />
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.4.0/dist/leaflet.css" />
 </head>
 <body>
 	<div id="map" style="width: 600px; height: 400px"></div>
 
 	<button onclick="seed()">Seed world from Z=0 until Z=4</div>
 
-	<script src="https://unpkg.com/leaflet@^1.0.0/dist/leaflet-src.js"></script>
-	<script src="https://unpkg.com/pouchdb@^5.0.0/dist/pouchdb.js"></script>
+	<script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet-src.js"></script>
+	<script src="https://unpkg.com/pouchdb@^7.0.0/dist/pouchdb.js"></script>
 
 	<script src="L.TileLayer.PouchDBCached.js"></script>
 	<script>
@@ -45,25 +45,32 @@
 
 		layer.addTo(map);
 
-		var wmsLayer = L.tileLayer.wms("http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
+		var wmsLayer = L.tileLayer.wms("https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi", {
 			layers: 'nexrad-n0r-900913',
 			format: 'image/png',
 			transparent: true,
 			attribution: "Weather data © 2012 IEM Nexrad",
 
 			useCache: true,
-			maxAge: 30 * 1000,	// 30 seconds
+			cacheMaxAge: 30 * 1000,	// 30 seconds
 			crossOrigin: true
 		});
 
 		wmsLayer.addTo(map);
 
-
-
-
+		wmsLayer.on('tilecachehit',function(ev){
+			console.log('Cache hit: ', ev.url);
+		});
+		wmsLayer.on('tilecachemiss',function(ev){
+			console.log('Cache miss: ', ev.url);
+		});
+		wmsLayer.on('tilecacheerror',function(ev){
+			console.log('Cache error: ', ev.tile, ev.error);
+		});
+		
 		// Seed the base layer, for the whole world, for zoom levels 0 through 4.
 		function seed() {
-			var bbox = L.latLngBounds(L.latLng(-85,-180), L.latLng(85,180));
+			var bbox = L.latLngBounds(L.latLng(-80,-180), L.latLng(85,180));
 			layer.seed( bbox, 0, 4 );
 		}
 

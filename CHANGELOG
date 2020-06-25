@@ -1,0 +1,7 @@
+
+# 1.0.0 (2019-02-06)
+
+* Switched from base64-encoded images to PouchDB attachments (should perform
+  much better)
+
+
