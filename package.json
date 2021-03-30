@@ -31,6 +31,6 @@
     "useTabs": true,
     "trailingComma": "es5",
     "arrowParens": "always"
-    },
+  },
   "dependencies": {}
 }
