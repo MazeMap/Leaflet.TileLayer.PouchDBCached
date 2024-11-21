@@ -1,4 +1,8 @@
+# Deprecated
 
+This repository is no longer maintained and is deprecated. Please be aware that it may not work with the latest versions of its dependencies.
+
+---
 
 Allows all Leaflet TileLayers to cache into PouchDB for offline use, in a transparent fashion.
 
